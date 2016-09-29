@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
 import android.location.Location;
@@ -22,10 +24,12 @@ import com.pherux.skyquest.R;
 import com.pherux.skyquest.managers.Persistence;
 import com.pherux.skyquest.utils.Tracker;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -43,12 +47,19 @@ public class CameraActivity extends Activity implements SurfaceHolder.Callback, 
     SurfaceView surface = null;
     SurfaceHolder holder = null;
     PowerManager.WakeLock wakeLock = null;
+//    boolean highRes = true;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "CameraActivity onCreate");
+
+        //// TODO: 29/9/2016 clean comments
+//        Bundle b = getIntent().getExtras();
+//        if(b != null)
+//            highRes = b.getBoolean("highRes");
+//        Log.d("RESOLUTION", ": " + highRes);
 
         Thread.currentThread().setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             @Override
@@ -111,20 +122,54 @@ public class CameraActivity extends Activity implements SurfaceHolder.Callback, 
         super.onDestroy();
     }
 
+    //scaleDown method to scale down resolution of image to meet requirements
+    //http://stackoverflow.com/questions/19264834/resize-image-to-fit-screen-size-and-resolution-in-android
+    public static Bitmap scaleDown(Bitmap realImage, float maxImageSize,
+                                   boolean filter) {
+        float ratio = Math.min(
+                (float) maxImageSize / realImage.getWidth(),
+                (float) maxImageSize / realImage.getHeight());
+        int width = Math.round((float) ratio * realImage.getWidth());
+        int height = Math.round((float) ratio * realImage.getHeight());
+
+        Bitmap newBitmap = Bitmap.createScaledBitmap(realImage, width,
+                height, filter);
+        return newBitmap;
+    }
+
     @Override
     public void onPictureTaken(byte[] data, Camera camera) {
         Log.d("SkyQuest", "PhotoActivity onPictureTaken");
-        File pictureFile = getOutputMediaFile();
+        File pictureFile = getOutputMediaFile(true);
+        File lowResFile = getOutputMediaFile(false);
+
         if (pictureFile == null) {
             Log.d("SkyQuest", "Error creating media file, check storage permissions: ");
             return;
         }
 
         try {
+            //1. convert original image byte array into BM
+            Bitmap origBM = BitmapFactory.decodeByteArray(data, 0, data.length);
+
+            //2. Scale down BM to required res
+            Bitmap scaledBM = scaleDown(origBM, 352, false);
+
+            //3. Convert scaled down BM back to byte array
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            scaledBM.compress(Bitmap.CompressFormat.PNG, 100, stream);
+            byte[] scaledData = stream.toByteArray();
+
+            //4. Save both images in their respective folders
             FileOutputStream out = new FileOutputStream(pictureFile);
             out.write(data);
             out.flush();
             out.close();
+
+            FileOutputStream outLowRes = new FileOutputStream(lowResFile);
+            outLowRes.write(scaledData);
+            outLowRes.flush();
+            outLowRes.close();
         } catch (FileNotFoundException e) {
             Log.d("SkyQuest", "File not found: " + e.getMessage());
         } catch (IOException e) {
@@ -135,12 +180,20 @@ public class CameraActivity extends Activity implements SurfaceHolder.Callback, 
 
         // Let the android gallery know that it can show this file.
         sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(pictureFile)));
+        sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(lowResFile)));
 
         Tracker.pingSuccess();
 
         Integer iteration = Persistence.getIntVal(Tracker.photoCountKey, 0);
         String photoStatus = "Photo " + new SimpleDateFormat("HH:mm:ss", Locale.US).format(new Date()) + " Number: " + iteration.toString();
         Persistence.putStringVal(Tracker.photoStatusKey, photoStatus);
+
+        if (getParent() == null) {
+            setResult(me.RESULT_OK);
+        }
+        else {
+            getParent().setResult(me.RESULT_OK);
+        }
 
         pleaseWait(5);
         me.finish();
@@ -149,12 +202,17 @@ public class CameraActivity extends Activity implements SurfaceHolder.Callback, 
 
     public void surfaceCreated(SurfaceHolder holder) {
         Log.d("SkyQuest", "PhotoActivity surfaceCreated");
+        //// TODO: 29/9/2016 clean comments
+//        boolean lowRes = false;
         try {
             setUpCameraParameter();
-
             cam.setPreviewDisplay(holder);
             cam.startPreview();
             takePicture();
+
+//            lowRes = true;
+//            setUpCameraParameter(lowRes);
+//            takePicture();
         } catch (IOException e) {
             Log.d("SkyQuest", "Error setting camera preview: " + e.getMessage());
             me.finish();
@@ -194,13 +252,22 @@ public class CameraActivity extends Activity implements SurfaceHolder.Callback, 
             params.setAutoExposureLock(false);
             params.setAutoWhiteBalanceLock(false);
 
-            Camera.Size maxSize = params.getPictureSize();
-            for (Camera.Size size : params.getSupportedPictureSizes()) {
-                if ((size.width * size.height) > (maxSize.width * maxSize.height)) {
-                    maxSize = size;
+            Camera.Size newSize = params.getPictureSize();
+            //// TODO: 29/9/2016 clean comments
+//            if(highRes){
+                for (Camera.Size size : params.getSupportedPictureSizes()) {
+//                    Log.d("size", "w: " + size.width + "h: " + size.height);
+                    if ((size.width * size.height) > (newSize.width * newSize.height)) {
+                        newSize = size;
+                    }
                 }
-            }
-            params.setPictureSize(maxSize.width, maxSize.height);
+//            }else{
+//                newSize.width = 352;
+//                newSize.height = 288;
+//            }
+
+            params.setPictureSize(newSize.width, newSize.height);
+            cam.setParameters(params);
 
             try {
                 params = cam.getParameters();
@@ -237,8 +304,17 @@ public class CameraActivity extends Activity implements SurfaceHolder.Callback, 
         }
     }
 
-    private File getOutputMediaFile() {
-        File mediaStorageDir = new File(Tracker.getStorageRoot(), "Photos");
+    private File getOutputMediaFile(boolean highRes) {
+        File mediaStorageDir;
+
+        if(highRes){
+            File temp = new File(Tracker.getStorageRoot(), "Photos");
+            mediaStorageDir = temp;
+        }else{
+            File temp = new File(Tracker.getStorageRoot(), "LowResPhotos");
+            mediaStorageDir = temp;
+        }
+
 
         if (!mediaStorageDir.exists()) {
             if (!mediaStorageDir.mkdirs()) {
@@ -253,7 +329,7 @@ public class CameraActivity extends Activity implements SurfaceHolder.Callback, 
 
         File mediaFile;
         mediaFile = new File(mediaStorageDir.getPath() + File.separator + fileName);
-        Log.d("SkyQuest", "Saved file to " + fileName);
+        Log.d("SkyQuest", "Saved file to " + mediaFile);
 
         return mediaFile;
     }
