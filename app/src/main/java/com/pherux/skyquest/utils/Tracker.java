@@ -64,6 +64,12 @@ public class Tracker {
         return val;
     }
 
+    public static Integer getPhoneId(String key) {
+        Integer val = Persistence.getIntVal(key, 0);
+        return val;
+    }
+
+
     public static String getStorageRoot() {
         return Environment.getExternalStorageDirectory() + "/skyquest";
     }
@@ -188,21 +194,18 @@ public class Tracker {
 //            dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 
             String time = dateFormat.format(Calendar.getInstance().getTime());
-            String batteryData = getBatteryString();
+//            String batteryData = getBatteryString();
 
-            Log.d(TAG, "Tracker data:\nBattery: " + batteryData + "\nTime: " + time +
-                    "\nLatitude:" + location.getLatitude() + "\nLongitude: " + location.getLongitude() +
-                    "\nAltitude: " + location.getAltitude() + "\nDevice Name: " + Utils.getDeviceName());
+            Log.d(TAG, "Tracker data: " + "\nTime: " + time +
+                    "\nLatitude:" + location.getLatitude() + "\nLongitude: " + location.getLongitude()
+                     + "\nDevice ID: " + getPhoneId("ARG_PHONE_ID"));
 
             App.getNetwork().getService().log(
                     Constants.MOBILE_SERVICE_PRIVATE_KEY,
-                    batteryData,
                     time,
                     "" + location.getLatitude(),
                     "" + location.getLongitude(),
-                    "" + location.getAltitude(),
-                    "",
-                    Utils.getDeviceName(),
+                    "" + getPhoneId("ARG_PHONE_ID"),
                     new Callback<Response>() {
                         @Override
                         public void success(Response response, Response response2) {

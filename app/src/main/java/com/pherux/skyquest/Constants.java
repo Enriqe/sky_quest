@@ -6,8 +6,8 @@ package com.pherux.skyquest;
 public class Constants {
 
     public static final String MOBILE_SERVICE_HOST = "https://data.sparkfun.com/";
-    public static final String MOBILE_SERVICE_PUBLIC_KEY = "G2L7dqdaLguR5zXZX5d7";
-    public static final String MOBILE_SERVICE_PRIVATE_KEY = "NWxB747ZxqumRnwZwRrB";
+    public static final String MOBILE_SERVICE_PUBLIC_KEY = "VGxEGjpqrxHaWvDLNLD6"; //old G2L7dqdaLguR5zXZX5d7
+    public static final String MOBILE_SERVICE_PRIVATE_KEY = "9Yd0Y62bndflJdGxAxGY"; //old NWxB747ZxqumRnwZwRrB
 
     public static final int INITIAL_DELAY_SECONDS = 5;
     public static final int INTERVAL_PHOTO_SECONDS = 60;

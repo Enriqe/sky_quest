@@ -14,12 +14,9 @@ public interface WebService {
     @GET("/input/" + Constants.MOBILE_SERVICE_PUBLIC_KEY)
     void log(
             @Query("private_key") String key,
-            @Query("battery") String battery,
             @Query("time") String time,
             @Query("lat") String lat,
             @Query("lon") String lon,
-            @Query("alt") String alt,
-            @Query("notes") String notes,
             @Query("id") String id,
             Callback<Response> cb);
 }

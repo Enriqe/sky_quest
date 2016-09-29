@@ -113,6 +113,19 @@
             android:maxLines="1" />
 
 
+        <TextView
+            android:text="Phone ID"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/textView6" />
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:ems="10"
+            android:id="@+id/activity_activity_device_id" />
+
         <com.gc.materialdesign.views.ButtonRectangle
             android:id="@+id/activity_activity_save"
             android:layout_width="match_parent"

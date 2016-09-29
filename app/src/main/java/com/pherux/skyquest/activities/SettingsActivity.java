@@ -27,6 +27,7 @@ public class SettingsActivity extends Activity {
     public static final String ARG_USE_SMS = SettingsActivity.class.getName() + "ARG_USE_SMS";
     public static final String ARG_USE_WEB_TRACKER = SettingsActivity.class.getName() + "ARG_USE_WEB_TRACKER";
     public static final String ARG_SMS_INTERVAL = SettingsActivity.class.getName() + "ARG_SMS_INTERVAL";
+    public static final String ARG_PHONE_ID = "ARG_PHONE_ID";
 
     private EditText deviceNameEditText;
     private EditText phoneNumberEditText;
@@ -36,6 +37,7 @@ public class SettingsActivity extends Activity {
     private Switch useCameraSwitch;
     private Switch useSMSSwitch;
     private Switch useWebTrackerSwitch;
+    private EditText phoneID;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +46,7 @@ public class SettingsActivity extends Activity {
         deviceNameEditText = (EditText) findViewById(R.id.activity_activity_device_name);
         useCameraSwitch = (Switch) findViewById(R.id.activity_activity_use_camera);
         cameraIntervalEditText = (EditText) findViewById(R.id.activity_activity_camera_interval);
+        phoneID = (EditText) findViewById(R.id.activity_activity_device_id);
 
         useWebTrackerSwitch = (Switch) findViewById(R.id.activity_activity_use_web_tracker);
         webTrackerIntervalEditText = (EditText) findViewById(R.id.activity_activity_web_tracker_interval);
@@ -55,6 +58,9 @@ public class SettingsActivity extends Activity {
 
         String deviceName = Persistence.getStringVal(ARG_DEVICE_NAME, Utils.getDeviceName());
         deviceNameEditText.setText(deviceName);
+
+        String deviceID = "" + Persistence.getIntVal("ARG_PHONE_ID", 0);
+        phoneID.setText(deviceID);
 
         boolean useCamera = Persistence.getBooleanVal(ARG_USE_CAMERA, Constants.USE_FEATURE_PHOTOS);
         int cameraInterval = Persistence.getIntVal(ARG_CAMERA_INTERVAL, Constants.INTERVAL_PHOTO_SECONDS);
@@ -184,6 +190,8 @@ public class SettingsActivity extends Activity {
 
             Persistence.putStringVal(ARG_PHONE_NUMBER, phoneNumberEditText.getText().toString());
             Persistence.putStringVal(ARG_DEVICE_NAME, deviceNameEditText.getText().toString());
+
+            Persistence.putIntVal(ARG_PHONE_ID, Integer.parseInt(phoneID.getText().toString()));
 
             onBackPressed();
         }
