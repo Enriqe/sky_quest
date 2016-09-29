@@ -47,19 +47,11 @@ public class CameraActivity extends Activity implements SurfaceHolder.Callback, 
     SurfaceView surface = null;
     SurfaceHolder holder = null;
     PowerManager.WakeLock wakeLock = null;
-//    boolean highRes = true;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "CameraActivity onCreate");
-
-        //// TODO: 29/9/2016 clean comments
-//        Bundle b = getIntent().getExtras();
-//        if(b != null)
-//            highRes = b.getBoolean("highRes");
-//        Log.d("RESOLUTION", ": " + highRes);
 
         Thread.currentThread().setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             @Override
@@ -202,17 +194,11 @@ public class CameraActivity extends Activity implements SurfaceHolder.Callback, 
 
     public void surfaceCreated(SurfaceHolder holder) {
         Log.d("SkyQuest", "PhotoActivity surfaceCreated");
-        //// TODO: 29/9/2016 clean comments
-//        boolean lowRes = false;
         try {
             setUpCameraParameter();
             cam.setPreviewDisplay(holder);
             cam.startPreview();
             takePicture();
-
-//            lowRes = true;
-//            setUpCameraParameter(lowRes);
-//            takePicture();
         } catch (IOException e) {
             Log.d("SkyQuest", "Error setting camera preview: " + e.getMessage());
             me.finish();
@@ -253,18 +239,12 @@ public class CameraActivity extends Activity implements SurfaceHolder.Callback, 
             params.setAutoWhiteBalanceLock(false);
 
             Camera.Size newSize = params.getPictureSize();
-            //// TODO: 29/9/2016 clean comments
-//            if(highRes){
-                for (Camera.Size size : params.getSupportedPictureSizes()) {
-//                    Log.d("size", "w: " + size.width + "h: " + size.height);
-                    if ((size.width * size.height) > (newSize.width * newSize.height)) {
-                        newSize = size;
-                    }
+
+            for (Camera.Size size : params.getSupportedPictureSizes()) {
+                if ((size.width * size.height) > (newSize.width * newSize.height)) {
+                    newSize = size;
                 }
-//            }else{
-//                newSize.width = 352;
-//                newSize.height = 288;
-//            }
+            }
 
             params.setPictureSize(newSize.width, newSize.height);
             cam.setParameters(params);
