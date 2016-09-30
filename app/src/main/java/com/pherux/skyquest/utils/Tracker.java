@@ -25,12 +25,15 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
 import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
+
+import static android.content.Context.LOCATION_SERVICE;
 
 /**
  * Created by Fernando Valdez on 8/18/15
@@ -142,18 +145,26 @@ public class Tracker {
                 + longitude + " Alt:" + altitude + " Acc:" + accuracy;
     }
 
-    public static Location getLocation() {
-        LocationManager locationManager = (LocationManager) App.getContext()
-                .getSystemService(Context.LOCATION_SERVICE);
-        Location location = locationManager
-                .getLastKnownLocation(LocationManager.GPS_PROVIDER);
-        if (location == null) {
-            location = new Location("reverseGeocoded");
-            location.setAltitude(0);
-            location.setLatitude(0);
-            location.setLongitude(0);
+    public static Location  getLocation   () {
+        LocationManager mLocationManager = (LocationManager) App.getContext().getSystemService(LOCATION_SERVICE);
+        List<String> providers = mLocationManager.getProviders(true);
+        Location bestLocation = null;
+        try {
+            for (String provider : providers) {
+                Location l = mLocationManager.getLastKnownLocation(provider);
+                if (l == null) {
+                    continue;
+                }
+                if (bestLocation == null || l.getAccuracy() < bestLocation.getAccuracy()) {
+// Found best last known location: %s", l);
+                    bestLocation = l;
+                }
+            }
+        } catch (SecurityException e) {
+            Log.d(TAG, "Tracker error at getting location: " + e.getMessage());
+            return new Location("reverseGeocoded");
         }
-        return location;
+        return bestLocation;
     }
 
     public static void sendLocationSMS() {
